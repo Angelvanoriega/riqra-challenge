@@ -13,7 +13,7 @@ def test_reset_db():
 
 def test_auto_sign_up():
     response = requests.post(
-        'http://3.84.254.116:5000/api/v1/resources/login',
+        'http://3.84.254.116:5000/api/v1/resources/auth/login',
         data={
             'email': 'angel.diaz@live.com.mx',
             'password': '1234567890'
@@ -29,7 +29,7 @@ def test_auto_sign_up():
 
 def test_login_password_incorrect():
     response = requests.post(
-        'http://3.84.254.116:5000/api/v1/resources/login',
+        'http://3.84.254.116:5000/api/v1/resources/auth/login',
         data={
             'email': 'angel.diaz@live.com.mx',
             'password': '0987654321'
@@ -45,7 +45,7 @@ def test_login_password_incorrect():
 
 def test_login_correctly():
     response = requests.post(
-        'http://3.84.254.116:5000/api/v1/resources/login',
+        'http://3.84.254.116:5000/api/v1/resources/auth/login',
         data={
             'email': 'angel.diaz@live.com.mx',
             'password': '1234567890'
@@ -59,8 +59,36 @@ def test_login_correctly():
     print('ok login')
 
 
+def test_search_product_term():
+    params = {'term': 'iphone'}
+    response = requests.get(
+        'http://3.84.254.116:5000/api/v1/resources/catalog/product/search',
+        params=params
+    )
+    response = response.json()
+    assert ('data' in response)
+    data = response['data']
+    assert (len(data) == 6)
+    print('ok search product by term')
+
+
+def test_list_product_by_supplier():
+    params = {'supplier': 'apple'}
+    response = requests.get(
+        'http://3.84.254.116:5000/api/v1/resources/catalog/product/list',
+        params=params
+    )
+    response = response.json()
+    assert ('data' in response)
+    data = response['data']
+    assert (len(data) == 2)
+    print('ok list product by supplier')
+
+
 if __name__ == '__main__':
     test_reset_db()
     test_auto_sign_up()
     test_login_password_incorrect()
     test_login_correctly()
+    test_search_product_term()
+    test_list_product_by_supplier()

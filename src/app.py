@@ -1,8 +1,9 @@
 import os
 import logging
 from flask import Flask, request
-from src.resources.user import User
-from src.resources.db import DB
+from src.auth.resources import User
+from src.dbadmin.resources import DB
+from src.catalog.resources import Product
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -36,9 +37,25 @@ def reset():
     return db.reset()
 
 
-@app.route('/api/v1/resources/login', methods=['POST'])
+@app.route('/api/v1/resources/auth/login', methods=['POST'])
 def login():
     email = request.form.get("email")
     password = request.form.get("password")
     user = User(email, password)
     return user.login()
+
+
+@app.route('/api/v1/resources/catalog/product/search', methods=['GET'])
+def product_search():
+    term = request.args.get("term")
+    product = Product()
+    product.term = term
+    return {'data': product.search()}
+
+
+@app.route('/api/v1/resources/catalog/product/list', methods=['GET'])
+def product_list():
+    supplier = request.args.get("supplier")
+    product = Product()
+    product.supplier = supplier
+    return {'data': product.list()}

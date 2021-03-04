@@ -13,10 +13,7 @@ CREATE TABLE IF NOT EXISTS suppliers
     supplier_id serial unique,
     name        text
 );
-ALTER TABLE users
-    ADD CONSTRAINT fk_supplier
-        FOREIGN KEY (supplier_id)
-            REFERENCES suppliers (supplier_id);
+
 
 insert into suppliers (supplier_id, name)
 values (1, 'Apple');
@@ -24,6 +21,29 @@ insert into suppliers (supplier_id, name)
 values (2, 'Sprint');
 insert into suppliers (supplier_id, name)
 values (3, 'T-mobile');
+
+DROP TABLE IF EXISTS products;
+CREATE TABLE IF NOT EXISTS products
+(
+    product_id  serial,
+    name        text,
+    price       double precision,
+    supplier_id integer
+);
+
+
+insert into products (name, price, supplier_id)
+values ('Iphone 11', 10, 1);
+insert into products (name, price, supplier_id)
+values ('Iphone XS', 9.5, 1);
+insert into products (name, price, supplier_id)
+values ('Iphone 11', 11, 2);
+insert into products (name, price, supplier_id)
+values ('Iphone 11', 12, 2);
+insert into products (name, price, supplier_id)
+values ('Iphone 8', 8, 3);
+insert into products (name, price, supplier_id)
+values ('Iphone 7', 7, 3);
 
 drop function if exists login;
 CREATE OR REPLACE FUNCTION login(my_email text,
@@ -102,3 +122,43 @@ BEGIN
     RETURN floor(random() * (high - low + 1) + low);
 END;
 $$ language 'plpgsql' STRICT;
+
+
+
+drop function if exists productsearch;
+CREATE OR REPLACE FUNCTION productsearch(my_term text) RETURNS SETOF JSON
+AS
+$$
+BEGIN
+
+    RETURN QUERY
+        SELECT array_to_json(array_agg(row_to_json(result)))
+        FROM (
+                 SELECT p.name as name, s.name as supplier, p.price
+                 from products p
+                          inner join suppliers s on p.supplier_id = s.supplier_id
+                 where lower(p.name) like '%' || lower(my_term) || '%'
+             ) AS result;
+END;
+$$ LANGUAGE plpgsql;
+
+drop function if exists productlist;
+CREATE OR REPLACE FUNCTION productlist(my_supplier text) RETURNS SETOF JSON
+AS
+$$
+DECLARE
+    _supplier_id integer;
+BEGIN
+
+    _supplier_id = (SELECT supplier_id FROM suppliers where lower(name) = lower(my_supplier));
+
+    RETURN QUERY
+        SELECT array_to_json(array_agg(row_to_json(result)))
+        FROM (
+                 SELECT p.name as name, s.name as supplier, p.price
+                 from products p
+                          inner join suppliers s on p.supplier_id = s.supplier_id
+                 where s.supplier_id = _supplier_id
+             ) AS result;
+END;
+$$ LANGUAGE plpgsql;
